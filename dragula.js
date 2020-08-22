@@ -340,17 +340,20 @@ function dragula (initialContainers, options) {
 
     function accepted () {
       var droppable = isContainer(target);
-      if (droppable === false) {
+      if (droppable === false || target instanceof window.ShadowRoot) {
         return false;
       }
 
       var immediate = getImmediateChild(target, elementBehindCursor);
+      if (immediate instanceof window.ShadowRoot) {
+        return false;
+      }
       var reference = getReference(target, immediate, clientX, clientY);
       var initial = isInitialPlacement(target, reference);
       if (initial) {
         return true; // should always be able to drop it right back where it was
       }
-      return o.accepts(_item, target, _source, reference);
+      return o.accepts(_item, target, _source, reference, elementBehindCursor);
     }
   }
 
@@ -476,10 +479,20 @@ function dragula (initialContainers, options) {
 
     function inside () { // faster, but only available if dropped inside a child element
       var rect = target.getBoundingClientRect();
+
       if (horizontal) {
-        return resolve(x > rect.left + getRectWidth(rect) / 2);
+        return resolve(x > rect.left + getRectWidth(rect) / 3);
       }
-      return resolve(y > rect.top + getRectHeight(rect) / 2);
+
+      // return target;//nextEl(target);
+      var percent = (y - rect.top) / getRectHeight(rect);
+
+      if (percent < 0.15) {
+        return target;
+      } else if (percent > 0.85) {
+        return target;
+      }
+      return nextEl(target);
     }
 
     function resolve (after) {
